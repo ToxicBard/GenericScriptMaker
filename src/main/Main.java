@@ -1,55 +1,81 @@
 package main;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.apache.commons.io.FilenameUtils;
 
 import commonTools.FileTools;
+
 
 public class Main {
 
 	public static void main(String[] args) throws IOException {
 		/*
-		 * TODO Start out by getting all of the
-		 * necessary parameters line-by-line 
-		 * from a text file.
-		 * TODO Clean up the parameterization and do
-		 * it in a better way down the road
-		 * 
+		 * TODO Come up with a better way to load the variables,
+		 * or at least a way to comment/mark the input file
 		 */
-		BufferedReader loadFile = FileTools.loadReadFile("vars.cfg");
+		
+		BufferedReader loadFile = FileTools.loadReadFile("cfg/vars.cfg");
+		BufferedWriter scriptWriter;
+		ArrayList<File> matchingFiles;
+		String scriptString;
 		
 		String fileListExtension = loadFile.readLine();
 		String fileListPath = loadFile.readLine();
-		String replaceString = loadFile.readLine();
-		/*
-		 * Get the list of files
-		 */
-		/*
-		 * Pass the list of files into the string replacement function
-		 */
-		/*
-		 * Print the output to console at first, but then implement
-		 * writing to file.
-		 */
+		String replaceStringRaw = loadFile.readLine();
+		String replaceStringToken = loadFile.readLine();
+		String outputScriptPath = loadFile.readLine();
+		
+		scriptWriter = FileTools.openWriteFile(outputScriptPath);
+		
+		//Get a list of files in the directory that match the file extension
+		matchingFiles = getFileList(fileListPath, fileListExtension);
+		
+		//Generate the script
+		scriptString = generateScriptString(matchingFiles, replaceStringRaw, replaceStringToken);
+		
+		//Display the result
+		System.out.println(scriptString);
+		
+		//Write the result to file
+		scriptWriter.write(scriptString);
+		scriptWriter.close();
 	}
 	
-	/*
-	 *A function that takes the absolute path
-	 *of the directory that the source files are
-	 *located in, as well as the file extension to
-	 *look for, and then returns a list of all of the
-	 *files in that directory that match the provided 
-	 *file extension
-	 */
+	private static ArrayList<File> getFileList(String directoryPath, String extension){
+		File listDirectory = new File(directoryPath);
+		ArrayList<File> matchingFiles = new ArrayList<File>();
+		File[] listDirectoryFiles = listDirectory.listFiles();
+		
+		//Sort the files alphabetically
+		Arrays.sort(listDirectoryFiles);
+		
+		//Build list of files that match the provided extension
+		for(File loopFile : listDirectoryFiles){
+			if(loopFile.getName().endsWith(extension)){
+				matchingFiles.add(loopFile);
+			}
+		}
+		
+		return matchingFiles;
+	}
 	
-	/*
-	 * A function that takes a list of file objects,
-	 * a raw string for replacement, and a delimiter string.
-	 * It then loops through each file and replaces the
-	 * delimiter string in the raw replacement string with
-	 * the filename (without extension) of the loop file.
-	 * It then returns a string containing each replaced
-	 * string, one on each line
-	 */
+	private static String generateScriptString(ArrayList<File> fileList, String replaceString, String replaceToken)
+	{
+		String toReturn = "";
+		String fileNameWithoutExtension;
+		
+		for(File loopFile : fileList){
+			fileNameWithoutExtension = FilenameUtils.removeExtension(loopFile.getName());
+			toReturn += replaceString.replace(replaceToken, fileNameWithoutExtension) + "\r\n";
+		}
+		
+		return toReturn;
+	}
 
 }
